@@ -1,24 +1,27 @@
-import React from 'react';
-import logo from './logo.svg';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css';
+import Details from './pages/Details/Details';
+import Home from './pages/Home/Home';
 
 function App() {
+  // const [posts, setPosts] = useState([]);
+  // useEffect(() => {
+  //   setInterval(() => {
+  //     axios.get('https://hn.algolia.com/api/v1/search_by_date?tags=story&page=0')
+  //     .then(({ data }) => setPosts(data.hits))
+  //   }, 10000)
+  // }, [])
+
+  // console.log(posts);
+  
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+     <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<Home />} />
+        <Route path='/details' element={<Details />} />
+      </Routes>
+     </BrowserRouter>
     </div>
   );
 }
