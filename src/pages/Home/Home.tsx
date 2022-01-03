@@ -68,6 +68,7 @@ const Home: React.FC = () => {
   }
 
   const handleRedirect = (post: PostType) => {
+    clearInterval(currentInterval);
     navigate("/details", { state: post })
   }
 

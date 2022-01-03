@@ -5,15 +5,15 @@ import { PostType } from '../Home/Home';
 
 const Details = () => {
     const location = useLocation();
-    const [post , setPost] = useState<PostType | unknown | undefined>()
-    setPost(location?.state);
+    console.log(location?.state);
+    
     
     return (
         <div>
             <Card sx={{ minWidth: 275 }}>
                 <CardContent>
                     <Typography sx={{ fontSize: 14 }} color="text.secondary">
-                    {/* {post?.title} */}
+                    {/* {location?.state?.title} */}
                     </Typography>
                     <Typography sx={{ mb: 1.5 }} color="text.secondary">
                     adjective
