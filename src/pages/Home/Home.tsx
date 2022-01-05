@@ -1,129 +1,136 @@
+import { Button, CircularProgress, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow } from '@mui/material';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import { Button, CircularProgress, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-export interface PostType{
+export interface Postinit{
   title: string,
   url: string,
-  created_at: string,
+  created_at: Date,
   author: string
 }
 
-const Home: React.FC = () => {
-  const [posts, setPosts] = useState<PostType[]>([]);
-  const [pageNum, setPageNum] = useState<number>(0);
-  const [currentInterval, setCurrentInterval] = useState<any>();
-  const [nbHits, setNbHits] = useState<number>(0);
-  const [Loading, setLoading] = useState<boolean>();
+interface Column {
+  id: 'title' | 'url' | 'created_at' | 'author',
+  label: string,
+  minWidth?: number,
+  align?: 'right'
+}
+
+const columns: Column[] = [
+  {id: 'title', label: 'Title', minWidth: 170},
+  {id: 'url', label: 'URL', minWidth: 150},
+  {id: 'created_at', label: 'Created At', minWidth: 100},
+  {id: 'author', label: 'Author', minWidth: 100},
+]
+
+const Home = () => {
   const navigate = useNavigate();
+  const [page, setPage] = useState<number>(0);
+  const [localPage, setLocalPage] = useState<number>(0);
+  const [posts, setPosts] = useState<Postinit[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [totalElement, setTotalElement] = useState<number>(0);
+  const rowPerPage: number = 15;
+
 
   useEffect(() => {
-    getPosts(pageNum);
-
+    
     const interval = setInterval(() => {
-      getPosts(pageNum);
+      setPage((_page) => _page + 1) 
     }, 10000);
-    setCurrentInterval(interval);
 
-    return () => clearInterval(currentInterval)
+    return () => clearInterval(interval);
   }, [])
 
-  const getPosts = (pageNum: number) => {
+  useEffect(() => {
+    getPost();
+  }, [page])
+
+  const getPost = async () => {
     try {
       setLoading(true);
-      axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${pageNum}`)
-      .then(({ data }) => {
-        setPosts(data.hits)
-        setNbHits(data.nbHits)
-        alert('loaded');
-      })
+
+      const res = await fetch(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${page}`);
+      const data = await res.json();
+
+      const _posts = [...posts, ...data.hits];
+      setPosts(_posts);
+      setTotalElement(_posts.length);
+
       setLoading(false);
-    } catch (error) {
+  } catch (error) {
+      setLoading(false);
       console.log(error);
-      setLoading(false)
-      
-    }
   }
-  
-  const handleChangePage = (event: unknown, pageNum:number) => {
-    if(pageNum === 0){
-      getPosts(pageNum);
-      
-    }
-    else{
-      clearInterval(currentInterval)
-    }
-
-    setPageNum(pageNum);
-    getPosts(pageNum);
   }
 
-  const handleRedirect = (post: PostType) => {
-    clearInterval(currentInterval);
-    navigate("/details", { state: post })
+  const handleChangePage = (event: unknown, pageNum: number) => {
+    setLocalPage(pageNum);
   }
 
-    return (
+  const getDetails = (post: Postinit) => {
+    navigate('/details', {
+      state: post
+    })
+  }
+
+  return (
           <Grid container spacing={2}>
-            <Grid item xs={8} sx={{margin: '100px auto'}}>
-              {
-                Loading?
-                <CircularProgress />
-                :
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <TableContainer sx={{ maxHeight: 440 }}>
-                  <Table stickyHeader aria-label="sticky table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Title</TableCell>
-                        <TableCell>Url</TableCell>
-                        <TableCell>Created At</TableCell>
-                        <TableCell>Author</TableCell>
-                        <TableCell>Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    {
-                      Loading?
-                      <CircularProgress />
-                      :
+              <Grid item xs={8} sx={{margin: '100px auto'}}>
+                {
+                  loading?
+                  <CircularProgress />
+                  :
+                  <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                  <TableContainer sx={{ maxHeight: 440 }}>
+                    <Table stickyHeader aria-label="sticky table">
+                      <TableHead>
+                        <TableRow>
+                          {
+                            columns?.map(column => 
+                              <TableCell
+                              key={column?.id}
+                              align={column?.align}
+                              style={{minWidth: column?.minWidth}}>
+                                {column?.label}
+                              </TableCell>
+                              )
+                          }
+                        </TableRow>
+                      </TableHead>
                       <TableBody>
                       {
-                        posts.map((post) => <TableRow
+                        posts.slice(localPage * rowPerPage, localPage * rowPerPage + rowPerPage).map((post) => <TableRow
                         key={post?.title}
+                        onClick={() => getDetails(post)}
                         >
                           <TableCell>{post?.title}</TableCell>
                           <TableCell>{post?.url}</TableCell>
                           <TableCell>{post?.created_at}</TableCell>
                           <TableCell>{post?.author}</TableCell>
-                          <TableCell> <Button onClick={() => handleRedirect(post)} variant='outlined' size='small'>Details</Button> </TableCell>
                         </TableRow>)
                         }
                       </TableBody>
-                    }
-                  </Table>
-                </TableContainer>
-                <TablePagination
-                  rowsPerPageOptions={[]}
-                  component="div"
-                  count={nbHits}
-                  rowsPerPage={posts?.length}
-                  page={pageNum}
-                  onPageChange={handleChangePage}
-                />
-                </Paper>
-              }
-            </Grid>
-        </Grid>
-    );
-};
+                    </Table>
+                  </TableContainer>
+                  {
+                    posts.length > 13 &&
+                    <TablePagination
+                    rowsPerPageOptions={[]}
+                    component="div"
+                    count={totalElement}
+                    rowsPerPage={rowPerPage}
+                    page={localPage}
+                    onPageChange={handleChangePage}
+                  />
+                  }
+                  
+                  </Paper>
+                }
+              </Grid>
+          </Grid>
+        );
+      }
 
 export default Home;
