@@ -1,6 +1,6 @@
-import { Button, CircularProgress, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow } from '@mui/material';
+import { Button, CircularProgress, Grid, Pagination, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow } from '@mui/material';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export interface Postinit{
@@ -27,11 +27,11 @@ const columns: Column[] = [
 const Home = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState<number>(0);
-  const [localPage, setLocalPage] = useState<number>(0);
+  const [localPage, setLocalPage] = useState<number>(1);
   const [posts, setPosts] = useState<Postinit[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [totalElement, setTotalElement] = useState<number>(0);
-  const rowPerPage: number = 15;
+  const rowPerPage: number = 10;
 
 
   useEffect(() => {
@@ -45,22 +45,17 @@ const Home = () => {
 
   useEffect(() => {
     getPost();
-  }, [page])
+  }, [page]);
 
   const getPost = async () => {
     try {
-      setLoading(true);
-
       const res = await fetch(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${page}`);
       const data = await res.json();
 
       const _posts = [...posts, ...data.hits];
       setPosts(_posts);
       setTotalElement(_posts.length);
-
-      setLoading(false);
   } catch (error) {
-      setLoading(false);
       console.log(error);
   }
   }
@@ -76,60 +71,67 @@ const Home = () => {
   }
 
   return (
-          <Grid container spacing={2}>
-              <Grid item xs={8} sx={{margin: '100px auto'}}>
-                {
-                  loading?
-                  <CircularProgress />
-                  :
-                  <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                  <TableContainer sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader aria-label="sticky table">
-                      <TableHead>
-                        <TableRow>
-                          {
-                            columns?.map(column => 
-                              <TableCell
-                              key={column?.id}
-                              align={column?.align}
-                              style={{minWidth: column?.minWidth}}>
-                                {column?.label}
-                              </TableCell>
-                              )
-                          }
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                      {
-                        posts.slice(localPage * rowPerPage, localPage * rowPerPage + rowPerPage).map((post) => <TableRow
-                        key={post?.title}
-                        onClick={() => getDetails(post)}
-                        >
-                          <TableCell>{post?.title}</TableCell>
-                          <TableCell>{post?.url}</TableCell>
-                          <TableCell>{post?.created_at}</TableCell>
-                          <TableCell>{post?.author}</TableCell>
-                        </TableRow>)
-                        }
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+          <div data-testid='home'>
+            <Grid container spacing={2}>
+                <Grid item xs={8} sx={{margin: '100px auto'}}>
                   {
-                    posts.length > 13 &&
-                    <TablePagination
-                    rowsPerPageOptions={[]}
-                    component="div"
-                    count={totalElement}
-                    rowsPerPage={rowPerPage}
-                    page={localPage}
-                    onPageChange={handleChangePage}
-                  />
+                    loading?
+                    <CircularProgress />
+                    :
+                    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                    <TableContainer sx={{ maxHeight: 440 }}>
+                      <Table stickyHeader aria-label="sticky table">
+                        <TableHead>
+                          <TableRow>
+                            {
+                              columns?.map(column => 
+                                <TableCell
+                                key={column?.id}
+                                align={column?.align}
+                                style={{minWidth: column?.minWidth}}>
+                                  {column?.label}
+                                </TableCell>
+                                )
+                            }
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                        {
+                          posts.slice((localPage - 1) * rowPerPage, (localPage - 1) * rowPerPage + rowPerPage).map((post) => <TableRow
+                          key={post?.title}
+                          onClick={() => getDetails(post)}
+                          >
+                            <TableCell>{post?.title}</TableCell>
+                            <TableCell>{post?.url}</TableCell>
+                            <TableCell>{post?.created_at}</TableCell>
+                            <TableCell>{post?.author}</TableCell>
+                          </TableRow>)
+                          }
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    {
+                      posts.length > 10 &&
+                    //   <TablePagination
+                    //   rowsPerPageOptions={[]}
+                    //   component="div"
+                    //   count={totalElement}
+                    //   rowsPerPage={rowPerPage}
+                    //   page={localPage}
+                    //   onPageChange={handleChangePage}
+                    // />
+                    <Pagination
+                      count={totalElement / 10}
+                      page={localPage}
+                      onChange={handleChangePage}
+                     />
+                    }
+                    
+                    </Paper>
                   }
-                  
-                  </Paper>
-                }
-              </Grid>
-          </Grid>
+                </Grid>
+            </Grid>
+          </div>
         );
       }
 

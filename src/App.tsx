@@ -5,7 +5,7 @@ import Home from './pages/Home/Home';
 
 function App() {
   return (
-    <div className="App">
+    <div className="App" data-testid='app'>
      <BrowserRouter>
       <Routes>
         <Route path='/' element={<Home />} />
